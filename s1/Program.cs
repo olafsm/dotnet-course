@@ -1,54 +1,69 @@
-﻿int n_rows = 10;
-int n_cols = 30;
-int score = 0;
-string statusMessage = "";
-char[,] map = new char[n_rows, n_cols];
-var random = new Random();
+﻿using System.Runtime.CompilerServices;
 
-int n_treasures = (int)(n_rows * n_cols * 0.01);
-char treasure = '$';
+const int rowCount = 10;
+const int colCount = 30;
+const int treasureCount = (int)(rowCount * colCount * 0.01);
+const int obstacleCount = (int)(rowCount * colCount * 0.05);
 
-int n_obstacles = (int)(n_rows * n_cols * 0.05);
-char obstacle = 'o';
+var score = 0;
+var statusMessage = "";
+var map = new char[rowCount, colCount];
 
+var treasureSymbol = '$';
+var obstacleSymbol = 'o';
+var playerSymbol = '@';
+var blankSymbol = ' ';
 
-for (var y = 0; y < n_rows; y++)
+void clearGrid(char symbol)
 {
-  for (var x = 0; x < n_cols; x++)
+  for (var y = 0; y < rowCount; y++)
   {
-    map[y, x] = ' ';
+    for (var x = 0; x < colCount; x++)
+    {
+      map[y, x] = symbol;
+    }
   }
 }
 
-for (var i = 0; i < n_obstacles; i++)
+void placeSymbols(char symbol, int symbolCount)
 {
-  map[random.Next(n_rows), random.Next(n_cols)] = obstacle;
+  for (int i = 0; i < symbolCount; i++)
+  {
+    var coordinates = getFreeSpace();
+    map[coordinates.Item1, coordinates.Item2] = symbol;
+  }
 }
 
-for (var i = 0; i < n_treasures; i++)
+(int, int) getFreeSpace()
 {
-  map[random.Next(n_rows), random.Next(n_cols)] = treasure;
+  var coordinates = (X: Random.Shared.Next(rowCount), Y: Random.Shared.Next(colCount));
+  while (map[coordinates.X, coordinates.Y] != blankSymbol)
+  {
+    coordinates = (X: Random.Shared.Next(rowCount), Y: Random.Shared.Next(colCount));
+  }
+  return coordinates;
 }
+
+
+
+clearGrid(blankSymbol);
 
 var player =
 (
-    Y: random.Next(n_rows),
-    X: random.Next(n_cols)
+    Y: Random.Shared.Next(rowCount),
+    X: Random.Shared.Next(colCount)
 );
+map[player.Y, player.X] = playerSymbol;
 
-if (map[player.Y, player.X] == treasure)
-{
-  score += 1;
-  statusMessage = "Lucky you! Spawned on a treasure";
-}
-map[player.Y, player.X] = '@';
+placeSymbols(obstacleSymbol, obstacleCount);
+placeSymbols(treasureSymbol, treasureCount);
 
 Console.Clear();
 Console.Write("PRESS ANY KEY TO START....");
 
 ConsoleKeyInfo cki;
 var gameStopped = false;
-while(!gameStopped)
+while (!gameStopped)
 {
   cki = Console.ReadKey();
 
@@ -73,44 +88,44 @@ while(!gameStopped)
       break;
   }
 
-  if (player.X < 0 || player.X >= n_cols || player.Y < 0 || player.Y >= n_rows)
+  if (player.X < 0 || player.X >= colCount || player.Y < 0 || player.Y >= rowCount)
   {
     statusMessage = "You crashed!";
   }
 
-  player.X = Math.Clamp(player.X, 0, n_cols - 1);
-  player.Y = Math.Clamp(player.Y, 0, n_rows - 1);
+  player.X = Math.Clamp(player.X, 0, colCount - 1);
+  player.Y = Math.Clamp(player.Y, 0, rowCount - 1);
 
-  if (map[player.Y, player.X] == treasure)
+  if (map[player.Y, player.X] == treasureSymbol)
   {
     score += 1;
     statusMessage = "You found a treasure!";
-    if (score == n_treasures)
+    if (score == treasureCount)
     {
       statusMessage = $"YOU WIN! Total treasure: ${score}";
       gameStopped = true;
     }
   }
 
-  if (map[player.Y, player.X] == obstacle)
+  if (map[player.Y, player.X] == obstacleSymbol)
   {
     player.X = oldCoords.X;
     player.Y = oldCoords.Y;
     statusMessage = "You crashed!";
   }
 
-  map[oldCoords.Y, oldCoords.X] = ' ';
-  map[player.Y, player.X] = '@';
+  map[oldCoords.Y, oldCoords.X] = blankSymbol;
+  map[player.Y, player.X] = playerSymbol;
 
   Console.Clear();
   Console.WriteLine($"TREASURES: {score}");
   Console.WriteLine($"PLAYER (X,Y): ({player.X}, {player.Y})");
   Console.WriteLine(statusMessage);
-  for (var x = 0; x < n_rows; x++)
+  for (var y = 0; y < rowCount; y++)
   {
-    for (var y = 0; y < n_cols; y++)
+    for (var x = 0; x < colCount; x++)
     {
-      Console.Write(map[x, y]);
+      Console.Write(map[y, x]);
     }
     Console.WriteLine();
   }
